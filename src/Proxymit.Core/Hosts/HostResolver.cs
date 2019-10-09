@@ -18,20 +18,22 @@ namespace Proxymit.Core.Hosts
 
         public Uri HostUri(HttpRequest httpRequest)
         {
-            var hostRules = domainConfigurationLoader.GetConfigurations();            
+            var hostRules = domainConfigurationLoader.GetConfigurations();
+            
+            var protocol = httpRequest.IsHttps ? "https" : "http";
 
-            foreach(var hostRule in hostRules.Where(x => x.Domain == httpRequest.Host.Host).OrderByDescending(x => x.RuleLength))
+            foreach (var hostRule in hostRules.Where(x => x.Domain == httpRequest.Host.Host).OrderByDescending(x => x.RuleLength).ToList())
             {
                 if (!string.IsNullOrWhiteSpace(hostRule.Path))
                 {
                     if(httpRequest.Path.StartsWithSegments(hostRule.Path))
                     {
-                        return new Uri($"{hostRule.Domain}{httpRequest.Path}");
+                        return new Uri($"{protocol}://{hostRule.Destination}{httpRequest.Path}");
                     }
                 }
                 else
                 {
-                    return new Uri($"{hostRule.Domain}{httpRequest.Path}");
+                    return new Uri($"{protocol}://{hostRule.Destination}{httpRequest.Path}");
                 }
             }
 
