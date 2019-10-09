@@ -21,7 +21,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/src/Proxymit.Host/bin/Debug/netcoreapp3.0/Proxymit.Host.dll",
+            "program": "${workspaceFolder}/Proxymit.Host/bin/Debug/netcoreapp3.0/Proxymit.Host.dll",
             "args": [],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
