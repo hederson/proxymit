@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Proxymit.Core.Extensions;
+using Proxymit.Core.Hosts;
+using Proxymit.Core.Middleware;
 
 namespace Proxymit.Host
 {
@@ -16,7 +19,7 @@ namespace Proxymit.Host
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddHttpClient();
+            services.AddProxymit();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -29,6 +32,10 @@ namespace Proxymit.Host
 
             app.UseRouting();
 
+            //app.UseHttpsRedirection();
+
+            app.UseMiddleware<ProxymitMiddleware>();
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapGet("/", async context =>
@@ -36,6 +43,8 @@ namespace Proxymit.Host
                     await context.Response.WriteAsync("Hello World!");
                 });
             });
+
+            
         }
     }
 }

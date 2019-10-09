@@ -23,19 +23,22 @@ namespace Proxymit.Core.Hosts
         /// <param name="httpContext">Current http context</param>
         /// <param name="uriHost">Host destination Uri</param>
         /// <returns></returns>
-        public async Task Request(HttpContext httpContext, Uri uriHost)
+        public async Task Request(HttpContext httpContext, Uri uriHost)            
         {
-            var requestMessage = CreateHostRequestMessage(httpContext, uriHost);
+            var requestMessage = CreateHostRequestMessage(httpContext, uriHost);            
             using (var responseMessage =
-                await httpClient.SendAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead, httpContext.RequestAborted))
+                await httpClient.SendAsync(requestMessage, HttpCompletionOption.ResponseContentRead, httpContext.RequestAborted))
             {
                 httpContext.Response.StatusCode = (int)responseMessage.StatusCode;
-                CopyResponseHeaders(httpContext, responseMessage);                
-
-                await responseMessage.Content.CopyToAsync(httpContext.Response.Body);
-                httpContext.Response.Body.Flush();
-                httpContext.Response.Body.Position = 0;
+                
+                CopyResponseHeaders(httpContext, responseMessage);
+                await ProcessResponse(httpContext, responseMessage);                
             }
+        }
+
+        private async Task ProcessResponse(HttpContext context, HttpResponseMessage  responseMessage)
+        {
+            await context.Response.Body.WriteAsync(await responseMessage.Content.ReadAsByteArrayAsync());
         }
 
         private HttpRequestMessage CreateHostRequestMessage(HttpContext httpContext, Uri uriHost)
@@ -45,6 +48,7 @@ namespace Proxymit.Core.Hosts
 
             requestMessage.RequestUri = uriHost;
             requestMessage.Headers.Host = uriHost.Host;
+            requestMessage.Headers.TransferEncodingChunked = false;
             requestMessage.Method = HttpUtil.GetMethod(httpContext.Request.Method);
 
             return requestMessage;
@@ -81,6 +85,7 @@ namespace Proxymit.Core.Hosts
             }
 
             context.Response.Headers.Remove("transfer-encoding");
+            context.Response.Headers.Remove("Transfer-Encoding");
         }
     }
 }

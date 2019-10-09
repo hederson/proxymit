@@ -17,7 +17,16 @@ namespace Proxymit.Core.Configs
 
         public IQueryable<DomainConfiguration> GetConfigurations()
         {
-            return null;
+            return new List<DomainConfiguration>
+            {
+                new DomainConfiguration
+                {
+                   Destination = "localhost:57475",
+                   Domain = "engine.local",
+                   Path = "",
+                   ChallengeType = ""
+                }
+            }.AsQueryable();
         }
     }
 }

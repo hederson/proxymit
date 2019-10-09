@@ -74,9 +74,13 @@ namespace Proxymit.Tests.Hosts
             
             Assert.AreEqual("1", httpContext.Response.Headers["CustomHeader"].ToString());
             Assert.AreEqual("2", httpContext.Response.Headers["CustomHeader2"].ToString());
-
+            
+            httpContext.Response.Body.Flush();
+            httpContext.Response.Body.Position = 0;
+            
             using (var bodyStream = new StreamReader(httpContext.Response.Body))
             {
+                
                 Assert.AreEqual(responseBodyString, bodyStream.ReadToEnd());
             }
         }

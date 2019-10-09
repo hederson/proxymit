@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Proxymit.Core.Hosts;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -11,18 +12,23 @@ namespace Proxymit.Core.Middleware
     public class ProxymitMiddleware
     {
         private static readonly HttpClient _httpClient;
-        private readonly RequestDelegate requestDelegate;
+        private readonly RequestDelegate _nextMiddleware;
 
-        public ProxymitMiddleware(RequestDelegate requestDelegate)
+        public ProxymitMiddleware(RequestDelegate nextMiddleware)
         {
-            this.requestDelegate = requestDelegate;
+            this._nextMiddleware = nextMiddleware;
         }
 
-        public async Task Invoke(HttpContext httpContext, IHttpClientFactory httpClientFactory)
+        public async Task Invoke(HttpContext httpContext, HostClient hostClient, HostResolver hostResolver)
         {
-            
+            var uri = hostResolver.HostUri(httpContext.Request);
 
-            await requestDelegate(httpContext);
+            if(uri != null)
+            {
+                await hostClient.Request(httpContext, uri);
+            }
+
+            await _nextMiddleware(httpContext);
         }
     }
 }
