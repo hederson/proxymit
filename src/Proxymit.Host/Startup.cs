@@ -26,6 +26,7 @@ namespace Proxymit.Host
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddResponseCompression();
             services.Configure<ExposedPortConfig>(options => Configuration.GetSection("ExposedPorts").Bind(options));
             services.AddProxymit();
         }
@@ -39,8 +40,7 @@ namespace Proxymit.Host
             }
 
             app.UseRouting();
-
-            //app.UseHttpsRedirection();
+            app.UseResponseCompression();
 
             app.UseMiddleware<ProxymitMiddleware>();
 
