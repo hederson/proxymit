@@ -12,6 +12,7 @@ namespace Proxymit.Core.Hosts
     public class HostClient
     {
         private readonly HttpClient httpClient;
+        private const int StreamCopyBufferSize = 81920;
 
         public HostClient(HttpClient httpClient)
         {
@@ -27,18 +28,10 @@ namespace Proxymit.Core.Hosts
         {
             var requestMessage = CreateHostRequestMessage(httpContext, uriHost);            
             using (var responseMessage =
-                await httpClient.SendAsync(requestMessage, HttpCompletionOption.ResponseContentRead, httpContext.RequestAborted))
+                await httpClient.SendAsync(requestMessage, HttpCompletionOption.ResponseContentRead, httpContext.RequestAborted).ConfigureAwait(false))
             {
-                httpContext.Response.StatusCode = (int)responseMessage.StatusCode;
-                
-                CopyResponseHeaders(httpContext, responseMessage);
-                await ProcessResponse(httpContext, responseMessage);                
+                await CopyResponse(httpContext, responseMessage).ConfigureAwait(false);
             }
-        }
-
-        private async Task ProcessResponse(HttpContext context, HttpResponseMessage  responseMessage)
-        {
-            await context.Response.Body.WriteAsync(await responseMessage.Content.ReadAsByteArrayAsync());
         }
 
         private HttpRequestMessage CreateHostRequestMessage(HttpContext httpContext, Uri uriHost)
@@ -47,8 +40,8 @@ namespace Proxymit.Core.Hosts
             CopyRequestContext(httpContext, requestMessage);
 
             requestMessage.RequestUri = uriHost;
-            requestMessage.Headers.Host = uriHost.Host;
-            requestMessage.Headers.TransferEncodingChunked = false;
+            requestMessage.Headers.Host = uriHost.Authority;
+            
             requestMessage.Method = HttpUtil.GetMethod(httpContext.Request.Method);
 
             return requestMessage;
@@ -66,26 +59,55 @@ namespace Proxymit.Core.Hosts
                 httpRequestMessage.Content = streamContent;
             }
 
-            foreach(var header in httpContext.Request.Headers)
+            foreach (var header in httpContext.Request.Headers)
             {
-                httpRequestMessage.Content?.Headers.TryAddWithoutValidation(header.Key, header.Value.ToArray());
+                if (header.Key.StartsWith("X-Forwarded-", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+                if (!httpRequestMessage.Headers.TryAddWithoutValidation(header.Key, header.Value.ToArray()))
+                {
+                    httpRequestMessage.Content?.Headers.TryAddWithoutValidation(header.Key, header.Value.ToArray());
+                }
             }
+
+            try
+            {
+                httpRequestMessage.Headers.TryGetValues("User-Agent", out var _);
+            }
+            catch (IndexOutOfRangeException)
+            {
+                httpRequestMessage.Headers.Remove("User-Agent");
+            }
+
         }
 
-        private void CopyResponseHeaders(HttpContext context, HttpResponseMessage responseMessage)
+        private async Task CopyResponse(HttpContext context, HttpResponseMessage responseMessage)
         {
-            foreach(var header in responseMessage.Headers)
+            var response = context.Response;
+            response.StatusCode = (int)responseMessage.StatusCode;
+            foreach (var header in responseMessage.Headers)
             {
-                context.Response.Headers[header.Key] = header.Value.ToArray();
+                response.Headers[header.Key] = header.Value.ToArray();
             }
 
             foreach(var header in responseMessage.Content.Headers)
             {
-                context.Response.Headers[header.Key] = header.Value.ToArray();
+                response.Headers[header.Key] = header.Value.ToArray();
             }
 
-            context.Response.Headers.Remove("transfer-encoding");
-            context.Response.Headers.Remove("Transfer-Encoding");
+            response.Headers.Remove("transfer-encoding");
+
+            using (var responseStream = await responseMessage.Content.ReadAsStreamAsync().ConfigureAwait(false))
+            {
+                await responseStream
+                    .CopyToAsync(response.Body, StreamCopyBufferSize, context.RequestAborted)
+                    .ConfigureAwait(false);
+                if (responseStream.CanWrite)
+                {
+                    await responseStream.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
         }
     }
 }

@@ -25,6 +25,13 @@ namespace Proxymit.Core.Configs
                    Domain = "engine.local",
                    Path = "",
                    ChallengeType = ""
+                },
+                new DomainConfiguration
+                {
+                   Destination = "github.com",
+                   Domain = "git.local",
+                   Path = "",
+                   ChallengeType = ""
                 }
             }.AsQueryable();
         }
