@@ -9,6 +9,7 @@ namespace Proxymit.Core.Configs
         public string Domain { get; set; }
         public string Path { get; set; }
         public string ChallengeType { get; set; }
+        public bool HttpsRedirect { get; set; }
         public string Destination { get; set; }
 
         public int RuleLength { get {

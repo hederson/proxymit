@@ -24,14 +24,16 @@ namespace Proxymit.Core.Configs
                    Destination = "localhost:57475",
                    Domain = "engine.local",
                    Path = "",
-                   ChallengeType = ""
+                   ChallengeType = "",
+                   HttpsRedirect = false
                 },
                 new DomainConfiguration
                 {
                    Destination = "github.com",
                    Domain = "git.local",
                    Path = "",
-                   ChallengeType = ""
+                   ChallengeType = "",
+                   HttpsRedirect = true
                 }
             }.AsQueryable();
         }

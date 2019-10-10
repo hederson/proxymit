@@ -4,16 +4,19 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
+using Microsoft.Extensions.Options;
 
 namespace Proxymit.Core.Hosts
 {
     public class HostResolver
     {
         private readonly IDomainConfigurationLoader domainConfigurationLoader;
+        private readonly IOptions<ExposedPortConfig> settings;
 
         public HostResolver(IDomainConfigurationLoader domainConfigurationLoader)
         {
             this.domainConfigurationLoader = domainConfigurationLoader;
+            this.settings = settings;
         }
 
         public Uri HostUri(HttpRequest httpRequest)
@@ -34,6 +37,33 @@ namespace Proxymit.Core.Hosts
                 else
                 {
                     return new Uri($"{protocol}://{hostRule.Destination}{httpRequest.Path}");
+                }
+            }
+
+            return null;
+        }
+
+        public Uri GetHostUri(HttpRequest httpRequest, DomainConfiguration domainConfiguration)
+        {
+            var protocol = httpRequest.IsHttps ? "https" : "http";
+            return new Uri($"{protocol}://{domainConfiguration.Destination}{httpRequest.Path}");
+        }
+
+        public DomainConfiguration GetMathingCofinguration(HttpRequest request)
+        {
+            var hostRules = domainConfigurationLoader.GetConfigurations();
+            foreach (var hostRule in hostRules.Where(x => x.Domain == request.Host.Host).OrderByDescending(x => x.RuleLength).ToList())
+            {
+                if (!string.IsNullOrWhiteSpace(hostRule.Path))
+                {
+                    if (request.Path.StartsWithSegments(hostRule.Path))
+                    {
+                        return hostRule;
+                    }
+                }
+                else
+                {
+                    return hostRule;
                 }
             }
 

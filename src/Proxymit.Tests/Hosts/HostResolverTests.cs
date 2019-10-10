@@ -72,7 +72,8 @@ namespace Proxymit.Tests.Hosts
         [TestCase("test.com", "/api", true, "https://destination3/api")]
         public void Should_MatchDomains(string domain, string path, bool isHttps, string expectedResult)
         {
-            HostResolver hostResolver = new HostResolver(domainLoader.Object);
+
+            HostResolver hostResolver = new HostResolver(domainLoader.Object, null);
             var httpRequest = this.SetupHttpRequest(domain, path, isHttps);
             var uri  = hostResolver.HostUri(httpRequest.Object);
 

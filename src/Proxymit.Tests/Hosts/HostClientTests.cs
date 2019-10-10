@@ -65,10 +65,10 @@ namespace Proxymit.Tests.Hosts
         [TestCase("http://test.com/api", "POST")]
         public async Task Should_RewriteResponseContext(string url, string method)
         {
-            var hostClient = new HostClient(httpClient);
+            var hostClient = new HostClient(httpClient, null);
             SetRequestMethod(method);
 
-            await hostClient.Request(httpContext, new Uri(url));
+            await hostClient.ReverseProxy(httpContext);
 
             Assert.AreEqual(3, httpContext.Response.Headers.Count);
             

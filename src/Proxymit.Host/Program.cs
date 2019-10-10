@@ -19,6 +19,10 @@ namespace Proxymit.Host
 
         public static IWebHostBuilder CreateHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
+            .UseKestrel(options =>
+            {
+                options.AddServerHeader = false;
+            })
                 .UseStartup<Startup>();
                 
     }

@@ -17,14 +17,9 @@ namespace Proxymit.Core.Middleware
             
         }
 
-        public async Task Invoke(HttpContext httpContext, HostClient hostClient, HostResolver hostResolver)
+        public async Task Invoke(HttpContext httpContext, HostClient hostClient)
         {
-            var uri = hostResolver.HostUri(httpContext.Request);
-
-            if(uri != null)
-            {
-                await hostClient.Request(httpContext, uri);
-            }
+            await hostClient.ReverseProxy(httpContext).ConfigureAwait(false);
         }
     }
 }
