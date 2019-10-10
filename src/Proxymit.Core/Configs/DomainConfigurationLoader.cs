@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration.Binder;
 
 namespace Proxymit.Core.Configs
 {
@@ -17,25 +19,7 @@ namespace Proxymit.Core.Configs
 
         public IQueryable<DomainConfiguration> GetConfigurations()
         {
-            return new List<DomainConfiguration>
-            {
-                new DomainConfiguration
-                {
-                   Destination = "localhost:57475",
-                   Domain = "engine.local",
-                   Path = "",
-                   ChallengeType = "",
-                   HttpsRedirect = false
-                },
-                new DomainConfiguration
-                {
-                   Destination = "github.com",
-                   Domain = "git.local",
-                   Path = "",
-                   ChallengeType = "",
-                   HttpsRedirect = true
-                }
-            }.AsQueryable();
+            return configuration.GetSection("Domains").Get<DomainConfiguration[]>().AsQueryable();
         }
     }
 }
