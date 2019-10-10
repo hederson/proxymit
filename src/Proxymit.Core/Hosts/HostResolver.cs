@@ -10,13 +10,11 @@ namespace Proxymit.Core.Hosts
 {
     public class HostResolver
     {
-        private readonly IDomainConfigurationLoader domainConfigurationLoader;
-        private readonly IOptions<ExposedPortConfig> settings;
+        private readonly IDomainConfigurationLoader domainConfigurationLoader;        
 
         public HostResolver(IDomainConfigurationLoader domainConfigurationLoader)
         {
-            this.domainConfigurationLoader = domainConfigurationLoader;
-            this.settings = settings;
+            this.domainConfigurationLoader = domainConfigurationLoader;            
         }
 
         public Uri HostUri(HttpRequest httpRequest)
@@ -43,13 +41,13 @@ namespace Proxymit.Core.Hosts
             return null;
         }
 
-        public Uri GetHostUri(HttpRequest httpRequest, DomainConfiguration domainConfiguration)
+        public virtual Uri GetHostUri(HttpRequest httpRequest, DomainConfiguration domainConfiguration)
         {
             var protocol = httpRequest.IsHttps ? "https" : "http";
             return new Uri($"{protocol}://{domainConfiguration.Destination}{httpRequest.Path}");
         }
 
-        public DomainConfiguration GetMathingCofinguration(HttpRequest request)
+        public virtual DomainConfiguration GetMathingCofinguration(HttpRequest request)
         {
             var hostRules = domainConfigurationLoader.GetConfigurations();
             foreach (var hostRule in hostRules.Where(x => x.Domain == request.Host.Host).OrderByDescending(x => x.RuleLength).ToList())

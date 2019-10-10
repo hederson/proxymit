@@ -73,7 +73,7 @@ namespace Proxymit.Tests.Hosts
         public void Should_MatchDomains(string domain, string path, bool isHttps, string expectedResult)
         {
 
-            HostResolver hostResolver = new HostResolver(domainLoader.Object, null);
+            HostResolver hostResolver = new HostResolver(domainLoader.Object);
             var httpRequest = this.SetupHttpRequest(domain, path, isHttps);
             var uri  = hostResolver.HostUri(httpRequest.Object);
 

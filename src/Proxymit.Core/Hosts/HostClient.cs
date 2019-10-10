@@ -31,19 +31,20 @@ namespace Proxymit.Core.Hosts
             var destinationConfig = hostResolver.GetMathingCofinguration(context.Request);
             if (destinationConfig != null)
             {
+                
                 if (destinationConfig.HttpsRedirect && !context.Request.IsHttps)
                 {
 
                     context.Response.Redirect(new UriBuilder("https",
                         context.Request.Host.Host, settings.Value.Https, context.Request.Path.Value).ToString());
 
-                }
-                else
-                {
+                    return;
 
-                    var uri = hostResolver.GetHostUri(context.Request, destinationConfig);
-                    await Request(context, uri).ConfigureAwait(false);
-                }
+                }              
+
+                var uri = hostResolver.GetHostUri(context.Request, destinationConfig);
+                await Request(context, uri).ConfigureAwait(false);
+                
             }
             else
             {

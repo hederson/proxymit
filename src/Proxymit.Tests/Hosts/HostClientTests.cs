@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Options;
 using Moq;
 using Moq.Protected;
 using NUnit.Framework;
+using Proxymit.Core.Configs;
 using Proxymit.Core.Hosts;
 using System;
 using System.Collections.Generic;
@@ -18,8 +20,10 @@ namespace Proxymit.Tests.Hosts
     {
         private HttpContext httpContext;
         private Mock<HttpMessageHandler> messageHandler;
+        private Mock<HostResolver> hostResolver;
         private HeaderDictionary headerDictionary;
         private HttpClient httpClient;
+        private IOptions<ExposedPortConfig> exposedConfig;
         private string responseBodyString = "response works";
 
         [SetUp]
@@ -38,7 +42,15 @@ namespace Proxymit.Tests.Hosts
                 ItExpr.IsAny<CancellationToken>())
                 .ReturnsAsync(responseMessage);
 
-            httpClient = new HttpClient(messageHandler.Object);           
+            httpClient = new HttpClient(messageHandler.Object);
+
+            hostResolver = new Mock<HostResolver>(new Mock<IDomainConfigurationLoader>().Object);
+
+            exposedConfig = Options.Create(new ExposedPortConfig
+            {
+                Http = 5002,
+                Https = 5003
+            });
 
         }
 
@@ -56,16 +68,33 @@ namespace Proxymit.Tests.Hosts
             httpContext.Request.Headers.TryAdd("Content-Type", "text/plain");
             httpContext.Request.Headers.TryAdd("Authentication", "Bearer 123csharp");
 
-            httpContext.Response.Body = new MemoryStream();
+            hostResolver.Setup(x => x.GetMathingCofinguration(httpContext.Request))
+                .Returns(new DomainConfiguration
+                {
+                    
+                });
 
+            
+            httpContext.Response.Body = new MemoryStream();
         }
 
         [Test]
-        [TestCase("http://test.com", "GET")]
-        [TestCase("http://test.com/api", "POST")]
-        public async Task Should_RewriteResponseContext(string url, string method)
+        [TestCase("http://test.com", "GET", false)]
+        [TestCase("http://test.com/api", "POST", false)]
+        public async Task Should_RewriteResponseContext(string url, string method, bool redirectHttps)
         {
-            var hostClient = new HostClient(httpClient, null);
+            var domainConfiguration = new DomainConfiguration
+            {
+                HttpsRedirect = redirectHttps
+            };
+
+            hostResolver.Setup(x => x.GetMathingCofinguration(It.IsAny<HttpRequest>()))
+               .Returns(domainConfiguration);
+
+            hostResolver.Setup(x => x.GetHostUri(It.IsAny<HttpRequest>(), It.IsAny<DomainConfiguration>()))
+                .Returns(new Uri("http://dummy.com"));
+
+            var hostClient = new HostClient(httpClient, hostResolver.Object, exposedConfig);
             SetRequestMethod(method);
 
             await hostClient.ReverseProxy(httpContext);
