@@ -12,8 +12,8 @@ namespace Proxymit.Core.Extensions
         public static IServiceCollection AddProxymit(this IServiceCollection services)
         {            
             services.AddHttpClient<HostClient>();
-            services.AddTransient<IDomainConfigurationLoader, DomainConfigurationLoader>();
-            services.AddTransient<HostResolver>();
+            services.AddScoped<IDomainConfigurationLoader, DomainConfigurationLoader>();
+            services.AddScoped<HostResolver>();
 
             return services;
         }
