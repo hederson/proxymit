@@ -29,6 +29,7 @@ namespace Proxymit.Host
             services.AddResponseCompression();
             services.Configure<ExposedPortConfig>(options => Configuration.GetSection("ExposedPorts").Bind(options));
             services.AddProxymit();
+            services.AddHealthChecks();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -39,20 +40,23 @@ namespace Proxymit.Host
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseRouting();
+            
             app.UseResponseCompression();
-
             app.UseMiddleware<ProxymitMiddleware>();
-
-            app.UseEndpoints(endpoints =>
+            app.UseWhen(context =>
             {
-                endpoints.MapGet("/", async context =>
+                var adminConfig = Configuration.GetSection("Admin").Get<AdminConfiguration>();
+                return adminConfig.Domain == context.Request.Host.Host;
+                
+            },
+            config =>
+            {
+                config.UseRouting();
+                config.UseEndpoints(endpoints =>
                 {
-                    await context.Response.WriteAsync("Hello World!");
+                    endpoints.MapHealthChecks("/health", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions());
                 });
             });
-
-            
         }
     }
 }

@@ -26,9 +26,9 @@ namespace Proxymit.Core.Hosts
             this.settings = settings;
         }
 
-        public async Task ReverseProxy(HttpContext context)
+        public async Task<bool> ReverseProxy(HttpContext context)
         {
-            var destinationConfig = hostResolver.GetMathingCofinguration(context.Request);
+            var destinationConfig = hostResolver.GetMathingCofinguration(context.Request);            
             if (destinationConfig != null)
             {
                 
@@ -38,18 +38,18 @@ namespace Proxymit.Core.Hosts
                     context.Response.Redirect(new UriBuilder("https",
                         context.Request.Host.Host, settings.Value.Https, context.Request.Path.Value).ToString());
 
-                    return;
+                    return true;
 
                 }              
 
                 var uri = hostResolver.GetHostUri(context.Request, destinationConfig);
                 await Request(context, uri).ConfigureAwait(false);
+                return true;
                 
             }
             else
             {
-                await BadRequest(context).ConfigureAwait(false);
-                
+                return false;
             }
         }
 

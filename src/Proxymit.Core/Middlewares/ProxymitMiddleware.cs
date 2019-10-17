@@ -12,14 +12,20 @@ namespace Proxymit.Core.Middleware
     public class ProxymitMiddleware
     {
         private static readonly HttpClient _httpClient;
-        public ProxymitMiddleware(RequestDelegate _)
+        private readonly RequestDelegate _next;
+
+        public ProxymitMiddleware(RequestDelegate _next)
         {
-            
+            this._next = _next;
         }
 
         public async Task Invoke(HttpContext httpContext, HostClient hostClient)
         {
-            await hostClient.ReverseProxy(httpContext).ConfigureAwait(false);
+            var success = await hostClient.ReverseProxy(httpContext).ConfigureAwait(false);
+            if(!success)
+            {
+                await _next(httpContext);
+            }
         }
     }
 }
