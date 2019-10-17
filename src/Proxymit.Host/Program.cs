@@ -22,6 +22,7 @@ namespace Proxymit.Host
             .UseKestrel(options =>
             {
                 options.AddServerHeader = false;
+                
             })
                 .UseStartup<Startup>();
                 
