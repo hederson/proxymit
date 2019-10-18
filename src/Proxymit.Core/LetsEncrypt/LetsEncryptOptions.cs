@@ -7,6 +7,11 @@ namespace Proxymit.Core.LetsEncrypt
 {
     public class LetsEncryptOptions
     {
+        public LetsEncryptOptions()
+        {
+            AcmeServer = WellKnownServers.LetsEncryptV2;
+        }
+
         public bool AcceptTermsOfService { get; set; }
         public string EmailAddress { get; set; }
 
@@ -23,5 +28,10 @@ namespace Proxymit.Core.LetsEncrypt
         public int DaysBefore { get; set; }
 
         private string _encryptionPassword = string.Empty;
+        public string EncryptionPassword
+        {
+            get => _encryptionPassword;
+            set => _encryptionPassword = value ?? throw new ArgumentNullException(nameof(value));
+        }
     }
 }
