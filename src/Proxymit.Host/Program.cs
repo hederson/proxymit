@@ -1,29 +1,46 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Proxymit.Core.Configs;
+using Proxymit.Core.Extensions;
+using Proxymit.Core.Middleware;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Http;
 
-namespace Proxymit.Host
+namespace Proxymit.Host;
+
+public class Program
 {
-    public class Program
+    public static void Main(string[] args)
     {
-        public static void Main(string[] args)
+        var builder = WebApplication.CreateBuilder(args);
+
+        builder.WebHost.UseKestrel(options =>
         {
-            CreateHostBuilder(args).Build().Run();
+            options.AddServerHeader = false;
+        });
+
+        builder.Services.Configure<ExposedPortConfig>(options => 
+            builder.Configuration.GetSection("ExposedPorts").Bind(options));
+        builder.Services.AddProxymit();
+
+        var app = builder.Build();
+
+        if (app.Environment.IsDevelopment())
+        {
+            app.UseDeveloperExceptionPage();
         }
 
-        public static IWebHostBuilder CreateHostBuilder(string[] args) =>
-            WebHost.CreateDefaultBuilder(args)
-            .UseKestrel(options =>
-            {
-                options.AddServerHeader = false;
-            })
-                .UseStartup<Startup>();
-                
+        app.UseRouting();
+
+        app.UseMiddleware<ProxymitMiddleware>();
+
+        app.MapGet("/", async context =>
+        {
+            await context.Response.WriteAsync("Hello World!");
+        });
+
+        app.Run();
     }
 }

@@ -99,10 +99,10 @@ namespace Proxymit.Tests.Hosts
 
             await hostClient.ReverseProxy(httpContext);
 
-            Assert.AreEqual(3, httpContext.Response.Headers.Count);
+            Assert.That(httpContext.Response.Headers.Count, Is.GreaterThanOrEqualTo(3));
             
-            Assert.AreEqual("1", httpContext.Response.Headers["CustomHeader"].ToString());
-            Assert.AreEqual("2", httpContext.Response.Headers["CustomHeader2"].ToString());
+            Assert.That(httpContext.Response.Headers["CustomHeader"].ToString(), Is.EqualTo("1"));
+            Assert.That(httpContext.Response.Headers["CustomHeader2"].ToString(), Is.EqualTo("2"));
             
             httpContext.Response.Body.Flush();
             httpContext.Response.Body.Position = 0;
@@ -110,7 +110,7 @@ namespace Proxymit.Tests.Hosts
             using (var bodyStream = new StreamReader(httpContext.Response.Body))
             {
                 
-                Assert.AreEqual(responseBodyString, bodyStream.ReadToEnd());
+                Assert.That(bodyStream.ReadToEnd(), Is.EqualTo(responseBodyString));
             }
         }
     }

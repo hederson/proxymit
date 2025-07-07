@@ -77,7 +77,7 @@ namespace Proxymit.Tests.Hosts
             var httpRequest = this.SetupHttpRequest(domain, path, isHttps);
             var uri  = hostResolver.HostUri(httpRequest.Object);
 
-            Assert.AreEqual(expectedResult, uri.ToString());
+            Assert.That(uri.ToString(), Is.EqualTo(expectedResult));
         }
     }
 }
